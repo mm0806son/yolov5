@@ -17,4 +17,11 @@ python3 -m venv smartcam
 source ~/Bureau/Local/pyvenv/smartcam/bin/activate
 
 cd ~/Bureau/Yolo/yolov5
+pip install torch
+pip install tqdm
+pip install pandas
+pip install torchvision
+pip install seaborn
+pip install tensorboard
+pip install pyyaml
 pip install -r requirements.txt
