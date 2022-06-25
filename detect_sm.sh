@@ -1,0 +1,1 @@
+python detect.py --source /homes/z20ning/Bureau/Local/smart_cam/data/obj_train_data/10-01-22_15-35-28_cam0.png --weight YOLOv5/yolov5n_pretrain_m3/weights/best.pt
