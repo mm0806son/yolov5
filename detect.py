@@ -188,6 +188,7 @@ def run(
             im0 = annotator.result()
             if view_img:
                 im_size_x, im_size_y, _ = np.shape(im0)
+                cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
                 cv2.imshow(str(p), cv2.resize(im0, (im_size_y // 2, im_size_x // 2)))
                 cv2.waitKey(1)  # 1 millisecond
 
