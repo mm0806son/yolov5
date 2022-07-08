@@ -1,0 +1,1 @@
+python detect.py --weights runs/train/exp3/weights/best.pt --source /homes/z20ning/Bureau/Local/smart_cam/data/obj_train_data/doubleclass.png --conf-thres 0.01 --iou-thres 0.5 --save-txt --save-conf
