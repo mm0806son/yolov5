@@ -5,6 +5,10 @@ Loss functions
 
 import torch
 import torch.nn as nn
+import itertools
+from collections import OrderedDict
+
+import numpy as np
 
 from utils.metrics import bbox_iou
 from utils.torch_utils import de_parallel
@@ -92,7 +96,8 @@ class ComputeLoss:
     sort_obj_iou = False
 
     # Compute losses
-    def __init__(self, model, autobalance=False):
+    def __init__(self, model, autobalance=False, multi_label=False):
+        self.multi_label = multi_label
         device = next(model.parameters()).device  # get model device
         h = model.hyp  # hyperparameters
 
@@ -122,7 +127,11 @@ class ComputeLoss:
         lcls = torch.zeros(1, device=self.device)  # class loss
         lbox = torch.zeros(1, device=self.device)  # box loss
         lobj = torch.zeros(1, device=self.device)  # object loss
-        tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
+        if self.multi_label:
+            squeezed_targets, cls_list, cls_nums = self.squeeze_targets(targets)
+            tcls, tbox, indices, anchors = self.build_targets(p, squeezed_targets)  # targets
+        else:
+            tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
 
         # Losses
         for i, pi in enumerate(p):  # layer index, layer predictions
@@ -153,7 +162,11 @@ class ComputeLoss:
                 # Classification
                 if self.nc > 1:  # cls loss (only if multiple classes)
                     t = torch.full_like(pcls, self.cn, device=self.device)  # targets
-                    t[range(n), tcls[i]] = self.cp
+                    if self.multi_label:
+                        tcls_npy = tcls[i].cpu().numpy()
+                        t[np.repeat(range(n), cls_nums[tcls_npy]), list(itertools.chain(*cls_list[tcls_npy]))] = self.cp
+                    else:
+                        t[range(n), tcls[i]] = self.cp
                     lcls += self.BCEcls(pcls, t)  # BCE
 
                 # Append targets to text file
@@ -173,6 +186,27 @@ class ComputeLoss:
         bs = tobj.shape[0]  # batch size
 
         return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
+
+    def squeeze_targets(self, targets):
+        # input targets(image,class,x,y,w,h)
+
+        # copy the input since we need to modify it
+        targets_copy = targets.clone()
+        # convert the key (image, x, y, w, h) to hashable tuple
+        keys = tuple(map(tuple, targets[:, [0, 2, 3, 4, 5]].cpu().numpy()))
+        # store all the classes for each unique box
+        cls = OrderedDict()
+
+        for k, c in zip(keys, targets[:, 1].long().cpu().numpy()):
+            cls.setdefault(k, []).append(c)
+
+        squeezed_keys = cls.keys()
+        cls_num = np.fromiter(map(lambda x: len(cls[x]), squeezed_keys), np.int)
+        idx = list(map(lambda x: keys.index(x), squeezed_keys))
+        squeezed_targets = targets_copy[idx]
+        squeezed_targets[:, 1] = torch.arange(len(squeezed_targets))
+
+        return squeezed_targets, np.array(list(cls.values()), dtype=object), cls_num
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
