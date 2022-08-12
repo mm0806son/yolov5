@@ -8,13 +8,27 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: ../datasets/multi_label  # dataset root dir
+path: ../datasets/odessa_small_multi  # dataset root dir
 # path: /homes/z20ning/Bureau/Local
 train: train.txt # train images (relative to 'path') 128 images
 val: train.txt  # val images (relative to 'path') 128 images
 # test: test.txt # test images (optional)
 
 # Classes
-nc: 3  # number of classes
-names: ["Container Ship","Bulk Carrier","Passengers Ship"]  # class names
+nc: 18  # number of classes
+names: ["Container Ship","Bulk Carrier","Passengers Ship","Container_B",
+"Container_BS",
+"Container_F",
+"Container_FS",
+"Container_S",
+"Bulk_B",
+"Bulk_BS",
+"Bulk_FW",
+"Bulk_FS",
+"Bulk_S",
+"Passengers_B",
+"Passengers_BS",
+"Passengers_F",
+"Passengers_FS",
+"Passengers_S"]  # class names
 
